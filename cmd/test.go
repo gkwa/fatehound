@@ -69,7 +69,7 @@ func test() {
 		line := scanner.Text()
 
 		// Replace video_3d="0" with an empty string
-		line = strings.Replace(line, `video_3d="0"`, "", -1)
+		line = strings.Replace(line, `video_3d="0" ?`, "", -1)
 
 		// Write the modified line to the strings.Builder
 		modifiedContent.WriteString(line + "\n")
