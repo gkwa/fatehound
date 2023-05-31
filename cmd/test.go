@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"syscall"
 
 	"github.com/spf13/cobra"
 )
@@ -47,16 +46,16 @@ func test() {
 	// Define the source file path
 	sourceFilePath := "C:/ProgramData/Streambox/SpectraUI/settings.xml"
 
-	// Open the source file in read-write mode with a lock
-	sourceFile, err := os.OpenFile(sourceFilePath, os.O_RDWR, 0666)
+	// Open the source file in read mode
+	sourceFile, err := os.OpenFile(sourceFilePath, os.O_RDWR, 0o666)
 	if err != nil {
 		fmt.Println("Error opening source file:", err)
 		return
 	}
 
-	// Apply an exclusive lock to the source file
-	if err := syscall.Flock(int(sourceFile.Fd()), syscall.LOCK_EX); err != nil {
-		fmt.Println("Error locking the source file:", err)
+	// Acquire an exclusive lock on the source file
+	if err := sourceFile.Truncate(0); err != nil {
+		fmt.Println("Error truncating the source file:", err)
 		sourceFile.Close()
 		return
 	}
@@ -86,16 +85,9 @@ func test() {
 	sourceFile.Close()
 
 	// Open the source file again, but this time without a lock
-	sourceFile, err = os.OpenFile(sourceFilePath, os.O_WRONLY|os.O_TRUNC, 0666)
+	sourceFile, err = os.OpenFile(sourceFilePath, os.O_WRONLY|os.O_TRUNC, 0o666)
 	if err != nil {
 		fmt.Println("Error opening source file:", err)
-		return
-	}
-
-	// Apply an exclusive lock to the source file
-	if err := syscall.Flock(int(sourceFile.Fd()), syscall.LOCK_EX); err != nil {
-		fmt.Println("Error locking the source file:", err)
-		sourceFile.Close()
 		return
 	}
 
