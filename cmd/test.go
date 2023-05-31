@@ -1,11 +1,14 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 )
@@ -22,6 +25,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("test called")
+		test()
 	},
 }
 
@@ -37,4 +41,74 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// testCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func test() {
+	// Define the source file path
+	sourceFilePath := "C:/ProgramData/Streambox/SpectraUI/settings.xml"
+
+	// Open the source file in read-write mode with a lock
+	sourceFile, err := os.OpenFile(sourceFilePath, os.O_RDWR, 0666)
+	if err != nil {
+		fmt.Println("Error opening source file:", err)
+		return
+	}
+
+	// Apply an exclusive lock to the source file
+	if err := syscall.Flock(int(sourceFile.Fd()), syscall.LOCK_EX); err != nil {
+		fmt.Println("Error locking the source file:", err)
+		sourceFile.Close()
+		return
+	}
+
+	// Create a strings.Builder to store the modified content
+	modifiedContent := strings.Builder{}
+
+	// Create a bufio.Scanner to read the source file line by line
+	scanner := bufio.NewScanner(sourceFile)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Replace video_3d="0" with an empty string
+		line = strings.Replace(line, `video_3d="0"`, "", -1)
+
+		// Write the modified line to the strings.Builder
+		modifiedContent.WriteString(line + "\n")
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error scanning source file:", err)
+		sourceFile.Close()
+		return
+	}
+
+	// Close the source file
+	sourceFile.Close()
+
+	// Open the source file again, but this time without a lock
+	sourceFile, err = os.OpenFile(sourceFilePath, os.O_WRONLY|os.O_TRUNC, 0666)
+	if err != nil {
+		fmt.Println("Error opening source file:", err)
+		return
+	}
+
+	// Apply an exclusive lock to the source file
+	if err := syscall.Flock(int(sourceFile.Fd()), syscall.LOCK_EX); err != nil {
+		fmt.Println("Error locking the source file:", err)
+		sourceFile.Close()
+		return
+	}
+
+	// Write the modified content to the source file
+	_, err = sourceFile.WriteString(modifiedContent.String())
+	if err != nil {
+		fmt.Println("Error writing to source file:", err)
+		sourceFile.Close()
+		return
+	}
+
+	// Close the source file
+	sourceFile.Close()
+
+	fmt.Println("File modified successfully!")
 }
