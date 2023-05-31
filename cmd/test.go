@@ -53,13 +53,6 @@ func test() {
 		return
 	}
 
-	// Acquire an exclusive lock on the source file
-	if err := sourceFile.Truncate(0); err != nil {
-		fmt.Println("Error truncating the source file:", err)
-		sourceFile.Close()
-		return
-	}
-
 	// Create a strings.Builder to store the modified content
 	modifiedContent := strings.Builder{}
 
