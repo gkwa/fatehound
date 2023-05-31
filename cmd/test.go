@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -58,11 +59,15 @@ func test() {
 
 	// Create a bufio.Scanner to read the source file line by line
 	scanner := bufio.NewScanner(sourceFile)
+
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// Replace video_3d="0" with an empty string
-		line = strings.Replace(line, `video_3d="0" ?`, "", -1)
+		// Create a regular expression pattern to match video_3d="0"
+		pattern := regexp.MustCompile(`video_3d="0" ?`)
+
+		// Use ReplaceAllString method to replace the pattern with an empty string
+		line = pattern.ReplaceAllString(line, "")
 
 		// Write the modified line to the strings.Builder
 		modifiedContent.WriteString(line + "\n")
