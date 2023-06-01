@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -40,15 +41,17 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	rootCmd.PersistentFlags().String("log-level",
+		"info", "Log level (trace, debug, info, warn, error, fatal, panic)",
+	)
+	// Set the --path flag to accept multiple values
+	rootCmd.PersistentFlags().StringSlice("path", []string{}, "Specify the paths")
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.fatehound.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Set the default value using Viper
+	viper.SetDefault("path", []string{
+		"C:\\ProgramData\\Streambox\\SpectraUI\\settings.xml.bak",
+		"C:\\ProgramData\\Streambox\\SpectraUI\\settings.xml",
+	})
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -68,9 +71,38 @@ func initConfig() {
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
+	viper.BindPFlag("log-level", rootCmd.Flags().Lookup("log-level"))
+
+	// Bind the flag to Viper
+	viper.BindPFlag("path", rootCmd.PersistentFlags().Lookup("path"))
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	}
+
+	setupLogging()
+}
+
+func setupLogging() {
+	logLevel := viper.GetString("log-level")
+
+	switch logLevel {
+	case "trace":
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "warn":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	case "fatal":
+		zerolog.SetGlobalLevel(zerolog.FatalLevel)
+	case "panic":
+		zerolog.SetGlobalLevel(zerolog.PanicLevel)
+	case "info":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	default:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 }
