@@ -26,7 +26,7 @@ $(APP): $(TARGET)
 
 $(TARGET): $(SOURCES)
 	gofumpt -w $(SOURCES)
-	goreleaser release --snapshot --skip-validate --clean --skip=publish
+	goreleaser release --snapshot --skip=validate --clean --skip=publish
 	go vet ./...
 
 all:
